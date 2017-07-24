@@ -1,4 +1,4 @@
-<%@page session="false"%>
+<%@page session="false" pageEncoding="UTF-8"%>
 <%@page import="
 java.net.HttpURLConnection,
 java.net.URL,
@@ -35,12 +35,12 @@ java.text.SimpleDateFormat" %>
 *
 * JSP proxy client
 *
-* Version 1.1.1-beta
+* Version 1.1.0
 * See https://github.com/Esri/resource-proxy for more information.
 *
 ----------------------------------------------------------- -->
 
-<%! final String version = "1.1.1-beta";   %>
+<%! final String version = "1.1.0";   %>
 
 <%!
     public static final class DataValidUtil {
@@ -132,7 +132,7 @@ java.text.SimpleDateFormat" %>
     private HttpURLConnection forwardToServer(HttpServletRequest request, String uri, byte[] postBody) throws IOException{
         //copy the client's request header to the proxy's request
         Enumeration headerNames = request.getHeaderNames();
-        HashMap<String, String> mapHeaderInfo = new HashMap<String, String>();
+        HashMap<String, String> mapHeaderInfo = new HashMap<String,String>();
         while (headerNames.hasMoreElements()) {
             String key = (String) headerNames.nextElement();
             String value = request.getHeader(key);
@@ -147,7 +147,8 @@ java.text.SimpleDateFormat" %>
 
     //proxy gets the response back from server
     private boolean fetchAndPassBackToClient(HttpURLConnection con, HttpServletResponse clientResponse, boolean ignoreAuthenticationErrors) throws IOException{
-        if (con!=null){
+        	
+		if (con!=null){
             Map<String, List<String>> headerFields = con.getHeaderFields();
             Set<String> headerFieldsSet = headerFields.keySet();
 
@@ -161,23 +162,15 @@ java.text.SimpleDateFormat" %>
                 List<String> headerFieldValue = headerFields.get(headerFieldKey);
                 StringBuilder sb = new StringBuilder();
                 for (String value : headerFieldValue) {
-                    // Reset the content-type for OGC WMS - issue #367
-                    // Note: this might not be what everyone expects, but it helps some users
-                    // TODO: make this configurable
-                    if (headerFieldKey != null && headerFieldKey.toLowerCase().equals("content-type")){
-                        if (value != null && value.toLowerCase().contains("application/vnd.ogc.wms_xml")){
-                            _log(Level.FINE, "Adjusting Content-Type for WMS OGC: " + value); 
-                            value = "text/xml";
-                        }
-                    }
                     sb.append(value);
                     sb.append("");
                 }
                 if (headerFieldKey != null){
-                    clientResponse.addHeader(headerFieldKey, DataValidUtil.removeCRLF(sb.toString()));
-                }
+                    clientResponse.addHeader(headerFieldKey, DataValidUtil.removeCRLF(sb.toString()));	
+				
+                }	
             }
-
+clientResponse.addHeader("Access-Control-Allow-Origin", "*");
             //copy the response content to the response to the client
             InputStream byteStream;
             if (con.getResponseCode() >= 400 && con.getErrorStream() != null){
@@ -232,7 +225,7 @@ java.text.SimpleDateFormat" %>
         byte[] bytes = null;
 
         //build the header sent to server
-        HashMap<String, String> headerInfo=new HashMap<String, String>();
+        HashMap<String, String> headerInfo=new HashMap<String,String>();
         headerInfo.put("Referer", PROXY_REFERER);
         if (method.equals("POST")){
             String[] uriArray = uri.split("\\?", 2);
@@ -1073,7 +1066,7 @@ java.text.SimpleDateFormat" %>
             synchronized(_rateMapLock){
                 ConcurrentHashMap<String, RateMeter> ratemap = castRateMap(application.getAttribute("rateMap"));
                 if (ratemap == null){
-                    ratemap = new ConcurrentHashMap<String, RateMeter>();
+                    ratemap = new ConcurrentHashMap<String,RateMeter>();
                     application.setAttribute("rateMap", ratemap);
                     application.setAttribute("rateMap_cleanup_counter", 0);
                 }
